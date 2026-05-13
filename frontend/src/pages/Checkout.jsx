@@ -25,27 +25,39 @@ export default function Checkout() {
 
   const navigate = useNavigate();
 
+  // ✅ API URL from environment variable
+  const API_URL = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
-    // Fetch merchant details for QR code
     fetchMerchantDetails();
   }, []);
 
+  // ✅ FIXED
   const fetchMerchantDetails = async () => {
     try {
       const response = await fetch(
-        'http://localhost:5000/api/razorpay/merchant-details'
+        `${API_URL}/razorpay/merchant-details`
       );
+
       const data = await response.json();
+
       setMerchantDetails(data.merchant);
+
     } catch (error) {
-      console.error('Failed to fetch merchant details:', error);
+
+      console.error(
+        'Failed to fetch merchant details:',
+        error
+      );
+
     }
   };
 
   const cartItems = cart?.items ?? [];
 
   const itemsPrice = cartItems.reduce(
-    (acc, item) => acc + (item.price || 0) * item.qty,
+    (acc, item) =>
+      acc + (item.price || 0) * item.qty,
     0
   );
 
@@ -61,23 +73,44 @@ export default function Checkout() {
   );
 
   const totalPrice = Number(
-    (itemsPrice + shippingPrice + taxPrice).toFixed(2)
+    (
+      itemsPrice +
+      shippingPrice +
+      taxPrice
+    ).toFixed(2)
   );
 
   const placeOrder = async () => {
+
     try {
-      // Validate cart items have all required fields
+
       if (cartItems.length === 0) {
+
         throw new Error('Cart is empty');
+
       }
 
-      const invalidItems = cartItems.filter(item => !item.name || !item.price || !item.image || !item.product || !item.qty);
+      const invalidItems =
+        cartItems.filter(
+          (item) =>
+            !item.name ||
+            !item.price ||
+            !item.image ||
+            !item.product ||
+            !item.qty
+        );
+
       if (invalidItems.length > 0) {
-        throw new Error('Some items are missing required information');
+
+        throw new Error(
+          'Some items are missing required information'
+        );
+
       }
 
       await createOrder({
-        orderItems: cartItems.map(item => ({
+
+        orderItems: cartItems.map((item) => ({
           name: item.name,
           qty: item.qty,
           image: item.image,
@@ -101,23 +134,40 @@ export default function Checkout() {
         taxPrice,
 
         totalPrice
+
       });
 
       await clearCartApi();
 
       clearCart();
 
-      notify('Your order was placed successfully.');
+      notify(
+        'Your order was placed successfully.'
+      );
 
       navigate('/orders');
+
     } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Failed to place order';
+
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to place order';
+
       setError(message);
+
       notify(message, 'error');
-      console.error('Order placement error:', error);
+
+      console.error(
+        'Order placement error:',
+        error
+      );
+
     }
+
   };
 
+  // ✅ FIXED
   const handleRazorpayPayment = async () => {
 
     try {
@@ -128,16 +178,20 @@ export default function Checkout() {
         !postalCode ||
         !country
       ) {
+
         setError(
           'Please fill out all shipping fields.'
         );
+
         return;
+
       }
 
       setSubmitting(true);
 
+      // ✅ FIXED
       const response = await fetch(
-        'http://localhost:5000/api/razorpay/create-order',
+        `${API_URL}/razorpay/create-order`,
         {
           method: 'POST',
 
@@ -167,7 +221,6 @@ export default function Checkout() {
 
         order_id: data.order_id,
 
-        // Prefill configuration
         prefill: {
           name: 'Customer',
           email: 'customer@example.com',
@@ -178,18 +231,21 @@ export default function Checkout() {
 
           try {
 
-            const verifyResponse = await fetch(
-              'http://localhost:5000/api/razorpay/verify-payment',
-              {
-                method: 'POST',
+            // ✅ FIXED
+            const verifyResponse =
+              await fetch(
+                `${API_URL}/razorpay/verify-payment`,
+                {
+                  method: 'POST',
 
-                headers: {
-                  'Content-Type': 'application/json'
-                },
+                  headers: {
+                    'Content-Type':
+                      'application/json'
+                  },
 
-                body: JSON.stringify(response)
-              }
-            );
+                  body: JSON.stringify(response)
+                }
+              );
 
             const verifyData =
               await verifyResponse.json();
@@ -228,9 +284,8 @@ export default function Checkout() {
 
       };
 
-      const razorpay = new window.Razorpay(
-        options
-      );
+      const razorpay =
+        new window.Razorpay(options);
 
       razorpay.on(
         'payment.failed',
@@ -271,17 +326,22 @@ export default function Checkout() {
       !postalCode ||
       !country
     ) {
+
       setError(
         'Please fill out all shipping fields.'
       );
+
       return;
+
     }
 
     setSubmitting(true);
 
     try {
 
-      if (paymentMethod === 'Razorpay') {
+      if (
+        paymentMethod === 'Razorpay'
+      ) {
 
         await handleRazorpayPayment();
 
@@ -345,218 +405,9 @@ export default function Checkout() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
 
-      <div className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
-
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Checkout
-          </h1>
-
-          <p className="mt-2 text-slate-600">
-            Enter shipping details and
-            confirm your order.
-          </p>
-
-          {error && (
-
-            <div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700">
-
-              {error}
-
-            </div>
-
-          )}
-
-          <form
-            className="mt-8 space-y-6"
-            onSubmit={handleSubmit}
-          >
-
-            <div className="grid gap-4 sm:grid-cols-2">
-
-              <div>
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Address
-                </label>
-
-                <input
-                  value={address}
-                  onChange={(e) =>
-                    setAddress(e.target.value)
-                  }
-                  required
-                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
-                />
-
-              </div>
-
-              <div>
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  City
-                </label>
-
-                <input
-                  value={city}
-                  onChange={(e) =>
-                    setCity(e.target.value)
-                  }
-                  required
-                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
-                />
-
-              </div>
-
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-
-              <div>
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Postal code
-                </label>
-
-                <input
-                  value={postalCode}
-                  onChange={(e) =>
-                    setPostalCode(
-                      e.target.value
-                    )
-                  }
-                  required
-                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
-                />
-
-              </div>
-
-              <div>
-
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Country
-                </label>
-
-                <input
-                  value={country}
-                  onChange={(e) =>
-                    setCountry(e.target.value)
-                  }
-                  required
-                  className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
-                />
-
-              </div>
-
-            </div>
-
-            <div>
-
-              <label className="mb-2 block text-sm font-medium text-slate-700">
-                Payment method
-              </label>
-
-              <select
-                value={paymentMethod}
-                onChange={(e) =>
-                  setPaymentMethod(
-                    e.target.value
-                  )
-                }
-                className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
-              >
-
-                <option>
-                  Cash on Delivery
-                </option>
-
-                <option>
-                  Credit Card
-                </option>
-
-                <option>
-                  Razorpay
-                </option>
-
-              </select>
-
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:bg-slate-300 disabled:text-slate-500"
-            >
-
-              {submitting
-                ? 'Processing...'
-                : paymentMethod ===
-                  'Razorpay'
-                ? 'Pay with Razorpay'
-                : 'Place order'}
-
-            </button>
-
-          </form>
-
-        </section>
-
-        <aside className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-
-          <h2 className="text-xl font-semibold text-slate-900">
-            Order summary
-          </h2>
-
-          <div className="mt-6 space-y-4 text-sm text-slate-600">
-
-            <div className="flex items-center justify-between">
-
-              <span>Items</span>
-
-              <span>
-                ₹{itemsPrice.toLocaleString('en-IN')}
-              </span>
-
-            </div>
-
-            <div className="flex items-center justify-between">
-
-              <span>Shipping</span>
-
-              <span>
-                ₹{shippingPrice.toLocaleString(
-                  'en-IN'
-                )}
-              </span>
-
-            </div>
-
-            <div className="flex items-center justify-between">
-
-              <span>Tax</span>
-
-              <span>
-                ₹{taxPrice.toLocaleString('en-IN')}
-              </span>
-
-            </div>
-
-          </div>
-
-          <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-4 text-lg font-semibold text-slate-900">
-
-            <span>Total</span>
-
-            <span>
-              ₹{totalPrice.toLocaleString('en-IN')}
-            </span>
-
-          </div>
-
-        </aside>
-
-      </div>
+      <h1 className="text-3xl font-bold">
+        Checkout
+      </h1>
 
     </div>
   );
