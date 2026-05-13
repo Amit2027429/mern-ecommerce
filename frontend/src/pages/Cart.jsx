@@ -23,7 +23,7 @@ export default function Cart() {
     ((itemsPrice || 0) + shippingPrice + taxPrice).toFixed(2)
   );
 
-  if (!cart.items.length) {
+  if (!cart?.items?.length) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
 

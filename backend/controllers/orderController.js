@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export const createOrder = async (req, res) => {
   try {
     const {
-      orderItems,
+      orderItems = [],
       shippingAddress,
       paymentMethod,
       itemsPrice,
@@ -15,7 +15,7 @@ export const createOrder = async (req, res) => {
       totalPrice
     } = req.body;
 
-    if (!orderItems || orderItems.length === 0) {
+    if (!Array.isArray(orderItems) || orderItems.length === 0) {
       return res.status(400).json({ message: 'No order items' });
     }
 

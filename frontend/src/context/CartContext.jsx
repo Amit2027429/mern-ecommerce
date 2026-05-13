@@ -8,12 +8,20 @@ export const CartProvider = ({ children }) => {
   const { user } = useAuth();
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('cart');
-    return saved ? JSON.parse(saved) : { items: [] };
+    if (!saved) return { items: [] };
+    try {
+      const parsed = JSON.parse(saved);
+      return parsed && typeof parsed === 'object' && Array.isArray(parsed.items)
+        ? parsed
+        : { items: [] };
+    } catch {
+      return { items: [] };
+    }
   });
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    setTotal(cart.items.reduce((acc, item) => acc + item.qty * item.price, 0));
+    setTotal(cart.items?.reduce((acc, item) => acc + item.qty * item.price, 0) ?? 0);
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
@@ -22,7 +30,7 @@ export const CartProvider = ({ children }) => {
       if (user?.token) {
         try {
           const { data } = await getCart();
-          setCart(data);
+          setCart(Array.isArray(data?.items) ? data : { items: [] });
         } catch (err) {
           console.error(err);
         }

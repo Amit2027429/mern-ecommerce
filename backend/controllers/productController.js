@@ -79,6 +79,7 @@ export const deleteProduct = async (req, res) => {
 export const addReview = async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (product) {
+    product.reviews = Array.isArray(product.reviews) ? product.reviews : [];
     const alreadyReviewed = product.reviews.find(
       (review) => review.user.toString() === req.user._id.toString()
     );
@@ -92,8 +93,11 @@ export const addReview = async (req, res) => {
       user: req.user._id
     };
     product.reviews.push(review);
-    product.numReviews = product.reviews.length;
-    product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
+    const reviewCount = product.reviews.length;
+    product.numReviews = reviewCount;
+    product.rating = reviewCount > 0
+      ? product.reviews.reduce((acc, item) => item.rating + acc, 0) / reviewCount
+      : 0;
     await product.save();
     res.status(201).json({ message: 'Review added' });
   } else {

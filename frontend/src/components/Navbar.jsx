@@ -13,7 +13,7 @@ export default function Navbar() {
   const { categories } = useProduct();
   const navigate = useNavigate();
 
-  const cartCount = cart.items.reduce((sum, item) => sum + item.qty, 0);
+  const cartCount = (cart?.items || []).reduce((sum, item) => sum + item.qty, 0);
 
   const handleSearch = (event) => {
     event.preventDefault();

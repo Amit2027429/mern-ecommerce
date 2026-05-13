@@ -17,9 +17,9 @@ export default function AdminDashboard() {
           fetchOrders()
         ]);
         setStats({
-          users: usersRes.data.length,
-          products: productsRes.data.products.length,
-          orders: ordersRes.data.length
+          users: usersRes.data?.length ?? 0,
+          products: productsRes.data?.products?.length ?? 0,
+          orders: ordersRes.data?.length ?? 0
         });
         setError('');
       } catch (err) {

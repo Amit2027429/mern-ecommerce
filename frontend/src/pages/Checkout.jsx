@@ -42,9 +42,10 @@ export default function Checkout() {
     }
   };
 
-  const itemsPrice = cart.items.reduce(
-    (acc, item) =>
-      acc + (item.price || 0) * item.qty,
+  const cartItems = cart?.items ?? [];
+
+  const itemsPrice = cartItems.reduce(
+    (acc, item) => acc + (item.price || 0) * item.qty,
     0
   );
 
@@ -66,17 +67,17 @@ export default function Checkout() {
   const placeOrder = async () => {
     try {
       // Validate cart items have all required fields
-      if (!cart.items || cart.items.length === 0) {
+      if (cartItems.length === 0) {
         throw new Error('Cart is empty');
       }
 
-      const invalidItems = cart.items.filter(item => !item.name || !item.price || !item.image || !item.product || !item.qty);
+      const invalidItems = cartItems.filter(item => !item.name || !item.price || !item.image || !item.product || !item.qty);
       if (invalidItems.length > 0) {
         throw new Error('Some items are missing required information');
       }
 
       await createOrder({
-        orderItems: cart.items.map(item => ({
+        orderItems: cartItems.map(item => ({
           name: item.name,
           qty: item.qty,
           image: item.image,
@@ -311,7 +312,7 @@ export default function Checkout() {
 
   };
 
-  if (!cart.items.length) {
+  if (!cart?.items?.length) {
 
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">

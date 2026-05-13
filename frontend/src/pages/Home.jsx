@@ -28,7 +28,7 @@ export default function Home() {
         if (category && category !== 'all') params.category = category;
 
         const { data } = await fetchProducts(params);
-        setProducts(data.products);
+        setProducts(data.products || []);
         setError('');
       } catch (err) {
         setError(err.response?.data?.message || 'Unable to load products');

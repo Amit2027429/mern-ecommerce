@@ -21,7 +21,7 @@ export default function ProductDetails() {
       try {
         const { data } = await fetchProduct(id);
         setProduct(data);
-        setQty(data.countInStock > 0 ? 1 : 0);
+        setQty(data?.countInStock > 0 ? 1 : 0);
         setError('');
       } catch (err) {
         setError(err.response?.data?.message || 'Unable to load product details');
