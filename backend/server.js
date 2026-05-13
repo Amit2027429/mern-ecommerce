@@ -38,7 +38,7 @@ const startServer = async () => {
     app.use('/api/orders', orderRoutes);
     app.use('/api/cart', cartRoutes);
     app.use('/api/upload', uploadRoutes);
-    //app.use('/api/razorpay', razorpayRoutes);
+    app.use('/api/razorpay', razorpayRoutes);
 
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
